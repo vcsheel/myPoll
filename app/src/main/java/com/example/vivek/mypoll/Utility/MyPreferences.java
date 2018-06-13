@@ -20,11 +20,11 @@ public class MyPreferences {
 
         return sp;
     }
-    public static String getMyCode(Context cont){
+    public static String getPollQues(Context cont){
         createSharedPref(cont);
         return sp.getString("MyCODE", null);
     }
-    public static void setMyCode(Context cont, String id){
+    public static void setPollQues(Context cont, String id){
         createSharedPref(cont);
         SharedPreferences.Editor spe = sp.edit();
         spe.putString("MyCODE", id);

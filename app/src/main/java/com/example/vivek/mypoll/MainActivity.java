@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private Button submitButton;
     private EditText option1;
     private EditText option2;
+    private EditText pollQuestion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
         submitButton = findViewById(R.id.submitButton);
         option1 = findViewById(R.id.option_et);
         option2 = findViewById(R.id.option_et1);
+        pollQuestion = findViewById(R.id.pollQuesEt);
 
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -42,8 +44,14 @@ public class MainActivity extends AppCompatActivity {
                 List<String> options = new ArrayList<String>();
                 String op1 = option1.getText().toString().trim();
                 String op2 = option2.getText().toString().trim();
+                String ques = pollQuestion.getText().toString().trim();
 
-                if(!validateField(op1)){
+                if(!validateField(ques)){
+                    errmsg = "Poll Question can't be left empty";
+                    Toast.makeText(getApplicationContext(),errmsg,Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                else if(!validateField(op1)){
                     errmsg = "Option 1 can't be left empty";
                     Toast.makeText(getApplicationContext(),errmsg,Toast.LENGTH_SHORT).show();
                     return;
@@ -72,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
+                MyPreferences.setPollQues(getApplicationContext(),ques);
                 MyPreferences.setOptionssList(getApplicationContext(),options);
                 startActivity(new Intent(getApplicationContext(),PollPageActivity.class));
                // finish();
