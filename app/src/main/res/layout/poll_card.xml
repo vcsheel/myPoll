@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
     app:cardCornerRadius="4dp"
-    app:cardMaxElevation="4dp"
+    app:cardMaxElevation="8dp"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     app:cardBackgroundColor="@color/blue_500"
     >

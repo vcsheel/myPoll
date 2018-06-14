@@ -1,5 +1,6 @@
 package com.example.vivek.mypoll;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -18,11 +19,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.vivek.mypoll.Utility.CustomProgress;
 import com.example.vivek.mypoll.Utility.MyPreferences;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class PollResult extends AppCompatActivity {
@@ -30,28 +39,46 @@ public class PollResult extends AppCompatActivity {
     private LinearLayout pollResultLayout;
     private TextView pollResultQues;
     private Button goHome;
+    private DatabaseReference mDatabaseRef;
+    Map<String,Integer> map;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_poll_result);
 
+        mDatabaseRef = FirebaseDatabase.getInstance().getReference();
         pollResultLayout = findViewById(R.id.pollResultLayout);
         pollResultQues = findViewById(R.id.pollResultQues);
+        progressDialog = new ProgressDialog(this);
         goHome = findViewById(R.id.goHome);
-        setPoll();
+        map = new HashMap<>();
+
+        progressDialog.setTitle("Submitting your choice");
+        progressDialog.setMessage("Please wait...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+        getDatabaseValues();
 
         goHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //todo change to polls home
-                startActivity(new Intent(getApplicationContext(),PollPageActivity.class));
+                startActivity(new Intent(getApplicationContext(),MainActivity.class));
+                finish();
             }
         });
     }
 
 
     private void setPoll() {
+        int total=0;
+        float currP = 0;
+
+        for(int v : map.values()){
+            Log.i("mac","mapv:"+v);
+            total += v;
+        }
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
@@ -63,16 +90,22 @@ public class PollResult extends AppCompatActivity {
             final CustomProgress customProgress = rowView.findViewById(R.id.customProgress);
 
 
-            customProgress.setMaximumPercentage(0.2f);
-            customProgress.setProgressColor(Color.parseColor("#123f12"));
+            if(map.containsKey(Options.get(i))){
+                int oval = map.get(Options.get(i));
+                currP = (float) oval/(float) total;
+            }else {
+                currP = 0;
+            }
 
-            int p = customProgress.getCurrentPercentage();
+            customProgress.setMaximumPercentage(currP);
+            customProgress.setProgressColor(R.color.green_200);
+            customProgress.useRoundedRectangleShape(20.0f);
             customProgress.setShowingPercentage(false);
 
             String LeftText = Options.get(i);
-            String RightText = String.valueOf(p)+"%";
+            String RightText = String.valueOf((int) Math.round(currP*100))+"%";
 
-            final String resultText = LeftText + "\t" + RightText;
+            final String resultText = LeftText + "       " + RightText;
             customProgress.setText(resultText);
 
             customProgress.setTextSize(20);
@@ -82,5 +115,39 @@ public class PollResult extends AppCompatActivity {
 
             pollResultLayout.addView(rowView, pollResultLayout.getChildCount());
         }
+    }
+
+
+    private void getDatabaseValues(){
+            mDatabaseRef.child("PollResults").child(MyPreferences.getPollQues(this))
+                    .child(MyPreferences.getAddress(this))
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            progressDialog.dismiss();
+                            for(DataSnapshot mysnap: dataSnapshot.getChildren()){
+                                String key = mysnap.getKey();
+                                String val = mysnap.getValue().toString();
+
+                                if(map.containsKey(val)){
+                                    map.put(val,map.get(val)+1);
+                                }else {
+                                    map.put(val,1);
+                                }
+                            }
+                            setPoll();
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            progressDialog.dismiss();
+                            Toast.makeText(getApplicationContext(),databaseError.getMessage(),Toast.LENGTH_SHORT).show();
+                        }
+                    });
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 }

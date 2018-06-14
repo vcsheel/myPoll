@@ -53,7 +53,7 @@ public class AddPollActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 String errmsg = "";
-                List<String> options = new ArrayList<String>();
+                List<String> options = new ArrayList<>();
                 String op1 = option1.getText().toString().trim();
                 String op2 = option2.getText().toString().trim();
                 String ques = pollQuestion.getText().toString().trim();
@@ -92,12 +92,12 @@ public class AddPollActivity extends AppCompatActivity {
                     }
                 }
 
-                progressDialog.setTitle("Please wait...");
-                progressDialog.setMessage("Adding your poll question");
+                progressDialog.setTitle("Adding your poll");
+                progressDialog.setMessage("Please wait ...");
                 progressDialog.setCancelable(false);
                 progressDialog.show();
 
-                mDatabase.child("Polls").child(ques).setValue(MyPreferences.getOptionsList(getApplicationContext()))
+                mDatabase.child("Polls").child(ques).setValue(options)
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {

@@ -37,7 +37,6 @@ public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(mContext,"working",Toast.LENGTH_SHORT).show();
                 MyPreferences.setPollQues(mContext,mPolls.get(position));
                 mContext.startActivity(new Intent(mContext,PollPageActivity.class));
             }

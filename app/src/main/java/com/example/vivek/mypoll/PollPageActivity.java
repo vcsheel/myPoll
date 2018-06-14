@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -18,11 +19,13 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -58,6 +61,7 @@ import static com.example.vivek.mypoll.R.drawable.border_colored;
 
 public class PollPageActivity extends AppCompatActivity {
 
+    private static int LOCATION_REQUEST_CODE = 2;
     private LinearLayout pollLayout;
     private String chosenOption;
     private TextView pollQuestion;
@@ -100,23 +104,32 @@ public class PollPageActivity extends AppCompatActivity {
                 if (address != null && !address.isEmpty()) {
                     if (chosenOption != null && !chosenOption.isEmpty()) {
 
+                        progressDialog.setTitle("Submitting your choice");
+                        progressDialog.setMessage("Please wait...");
+                        progressDialog.setCancelable(false);
+                        progressDialog.show();
+
                         mDatabase.child("PollResults").child(MyPreferences.getPollQues(getApplicationContext()))
                                 .child(address).child(String.valueOf(count++)).setValue(chosenOption)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
+                                        progressDialog.dismiss();
                                         Toast.makeText(getApplicationContext(),"voted",Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(getApplicationContext(), PollResult.class));
+                                        finish();
+
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
                                     @Override
                                     public void onFailure(@NonNull Exception e) {
+                                        progressDialog.dismiss();
                                         Toast.makeText(getApplicationContext(),"failed "+e.getMessage(),Toast.LENGTH_SHORT).show();
-
+                                        startActivity(new Intent(getApplicationContext(), PollResult.class));
                                     }
                                 });
 
-                        //startActivity(new Intent(getApplicationContext(), PollResult.class));
 
                     } else {
                         Toast.makeText(getApplicationContext(), "Please choose one option!", Toast.LENGTH_SHORT).show();
@@ -133,13 +146,19 @@ public class PollPageActivity extends AppCompatActivity {
             {
                 @Override
                 public void onClick (View view){
-                displayLocationSettingsRequest(getApplicationContext());
 
-                progressDialog.setTitle("Please wait...");
-                progressDialog.setMessage("Getting your Address...");
-                progressDialog.setCancelable(false);
-                progressDialog.show();
+                if(MyPreferences.getAddress(getApplicationContext())==null) {
+                    displayLocationSettingsRequest(getApplicationContext());
 
+                    progressDialog.setTitle("Getting your Location");
+                    progressDialog.setMessage("Please wait...");
+                    progressDialog.setCancelable(false);
+                    progressDialog.show();
+                }else {
+                    address = MyPreferences.getAddress(getApplicationContext());
+                    userLocation.setText(address);
+
+                }
             }
             });
         }
@@ -151,6 +170,7 @@ public class PollPageActivity extends AppCompatActivity {
 
             map = MyPreferences.getAllPolls(this);
             Options = map.get(MyPreferences.getPollQues(this));
+            MyPreferences.setOptionssList(this,Options);
 
             pollQuestion.setText(MyPreferences.getPollQues(this));
 
@@ -222,18 +242,39 @@ public class PollPageActivity extends AppCompatActivity {
                 }
             };
 
+            if(ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_FINE_LOCATION)){
+                new AlertDialog.Builder(this)
+                        .setTitle("Permission Needed")
+                        .setMessage("This permission is required since poll is based on location")
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                ActivityCompat.requestPermissions(PollPageActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
 
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                //ask permission
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            } else {
-                //we have permission
-
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 60, 500, locationListener);
-                Location lastknownlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                storeLocation(lastknownlocation);
+                            }
+                        })
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                progressDialog.dismiss();
+                                dialogInterface.dismiss();
+                            }
+                        })
+                        .create()
+                        .show();
             }
+            else {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    //ask permission
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
+                } else {
+                    //we have permission
 
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 120, 500, locationListener);
+                    Location lastknownlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    storeLocation(lastknownlocation);
+                }
+            }
         }
 
         private void storeLocation (Location location){
@@ -246,6 +287,7 @@ public class PollPageActivity extends AppCompatActivity {
                         address = listAddress.get(0).getLocality();
                         userLocation.setText(address);
                         if (address != null && !address.isEmpty()) {
+                            MyPreferences.setAddress(this,address);
                             progressDialog.dismiss();
                         }
                     }
@@ -260,13 +302,16 @@ public class PollPageActivity extends AppCompatActivity {
 
         @Override
         public void onRequestPermissionsResult ( int requestCode, @NonNull String[] permissions,
-        @NonNull int[] grantResults){
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        @NonNull int[] grantResults) {
 
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
+            if (requestCode == LOCATION_REQUEST_CODE) {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 120, 500, locationListener);
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 120, 500, locationListener);
+
+                    }
+                }else {
+                    progressDialog.dismiss();
                 }
             }
         }
@@ -293,7 +338,9 @@ public class PollPageActivity extends AppCompatActivity {
                     switch (status.getStatusCode()) {
                         case LocationSettingsStatusCodes.SUCCESS:
                             Log.i(TAG, "All location settings are satisfied.");
+
                             getLocation();
+
                             break;
                         case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                             Log.i(TAG, "Location settings are not satisfied. Show the user a dialog to upgrade location settings ");

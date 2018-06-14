@@ -23,6 +23,18 @@ public class MyPreferences {
         return sp;
     }
 
+    public static String getAddress(Context cont){
+        createSharedPref(cont);
+        return sp.getString("address", null);
+    }
+
+    public static void setAddress(Context cont, String myAdd){
+        createSharedPref(cont);
+        SharedPreferences.Editor spe = sp.edit();
+        spe.putString("address", myAdd);
+        spe.apply();
+    }
+
     public static String getPollQues(Context cont){
         createSharedPref(cont);
         return sp.getString("MyCODE", null);
