@@ -8,7 +8,9 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MyPreferences {
 
@@ -20,6 +22,7 @@ public class MyPreferences {
 
         return sp;
     }
+
     public static String getPollQues(Context cont){
         createSharedPref(cont);
         return sp.getString("MyCODE", null);
@@ -48,6 +51,27 @@ public class MyPreferences {
         Gson gson = new Gson();
         String json = gson.toJson(addresslist);
         spe.putString("AddressList", json);
+        spe.apply();
+    }
+
+
+    public static Map<String,List<String>> getAllPolls(Context cont){
+        createSharedPref(cont);
+        Gson gson = new Gson();
+        String json = sp.getString("allpolls",null);
+        Type type = new TypeToken<HashMap<String,List<String>>>() {}.getType();
+        Map<String,List<String>> polllist = gson.fromJson(json,type);
+        if(polllist==null){
+            polllist = new HashMap<>();
+        }
+        return polllist;
+    }
+    public static void setAllPolls(Context cont, Map<String,List<String>> polllist){
+        createSharedPref(cont);
+        SharedPreferences.Editor spe = sp.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(polllist);
+        spe.putString("allpolls", json);
         spe.apply();
     }
 }

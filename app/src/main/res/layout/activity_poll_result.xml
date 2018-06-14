@@ -39,7 +39,7 @@
     <Button
         android:id="@+id/goHome"
         android:text="Go to Polls Page"
-        android:textSize="18dp"
+        android:textSize="18sp"
         android:layout_alignParentBottom="true"
         android:background="@drawable/border"
         android:layout_width="match_parent"

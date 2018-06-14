@@ -1,7 +1,9 @@
 package com.example.vivek.mypoll;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +15,12 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.example.vivek.mypoll.Utility.MyPreferences;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +33,8 @@ public class AddPollActivity extends AppCompatActivity {
     private EditText option1;
     private EditText option2;
     private EditText pollQuestion;
+    private DatabaseReference mDatabase;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +45,9 @@ public class AddPollActivity extends AppCompatActivity {
         option1 = findViewById(R.id.option_et);
         option2 = findViewById(R.id.option_et1);
         pollQuestion = findViewById(R.id.pollQuesEt);
+        progressDialog = new ProgressDialog(this);
+
+        mDatabase = FirebaseDatabase.getInstance().getReference();
 
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,9 +92,28 @@ public class AddPollActivity extends AppCompatActivity {
                     }
                 }
 
-                MyPreferences.setPollQues(getApplicationContext(),ques);
-                MyPreferences.setOptionssList(getApplicationContext(),options);
-                startActivity(new Intent(getApplicationContext(),PollPageActivity.class));
+                progressDialog.setTitle("Please wait...");
+                progressDialog.setMessage("Adding your poll question");
+                progressDialog.setCancelable(false);
+                progressDialog.show();
+
+                mDatabase.child("Polls").child(ques).setValue(MyPreferences.getOptionsList(getApplicationContext()))
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                progressDialog.dismiss();
+                                Toast.makeText(getApplicationContext(),"Poll Added ",Toast.LENGTH_SHORT).show();
+                                startActivity(new Intent(getApplicationContext(),MainActivity.class));
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(getApplicationContext(),"Error while uploading: "+e.getMessage(),Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                //startActivity(new Intent(getApplicationContext(),PollPageActivity.class));
                // finish();
             }
         });
