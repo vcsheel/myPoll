@@ -55,7 +55,13 @@ public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
             @Override
             public void onClick(View view) {
                 MyPreferences.setPollQues(mContext,mPolls.get(position));
-                getDatabaseValues();
+                if(MyPreferences.getAddress(mContext)==null)
+                {
+                    Toast.makeText(mContext,"Location is required to proceed",Toast.LENGTH_SHORT).show();
+                    ((MainActivity)mContext).displayLocationSettingsRequest(mContext);
+                }
+                else
+                    getDatabaseValues();
             }
         });
     }
@@ -99,7 +105,7 @@ public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
         progressDialog.show();
 
         mDatabaseRef.child("PollResults").child(MyPreferences.getPollQues(mContext))
-                .child("Bengaluru")
+                .child(MyPreferences.getAddress(mContext))
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {

@@ -106,9 +106,11 @@ public class PollPageActivity extends AppCompatActivity {
         }
 
         if (MyPreferences.getHasPolled(this)) {
+            Toast.makeText(this,"You have already polled for this poll",Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, PollResult.class));
             finish();
         }
+
 
         setPoll();
 
@@ -129,7 +131,7 @@ public class PollPageActivity extends AppCompatActivity {
                                     @Override
                                     public void onSuccess(Void aVoid) {
                                         progressDialog.dismiss();
-                                        Toast.makeText(getApplicationContext(), "voted", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getApplicationContext(), "Polled successfully", Toast.LENGTH_SHORT).show();
                                         startActivity(new Intent(getApplicationContext(), PollResult.class));
                                         finish();
 
@@ -156,32 +158,15 @@ public class PollPageActivity extends AppCompatActivity {
         });
 
 
-        userLocation.setOnClickListener(new View.OnClickListener()
-
-        {
-            @Override
-            public void onClick(View view) {
-
-                if (MyPreferences.getAddress(getApplicationContext()) == null) {
-                    displayLocationSettingsRequest(getApplicationContext());
-
-                    progressDialog.setTitle("Getting your Location");
-                    progressDialog.setMessage("Please wait...");
-                    progressDialog.setCancelable(false);
-                    progressDialog.show();
-                } else {
-                    address = MyPreferences.getAddress(getApplicationContext());
-                    userLocation.setText(address);
-
-                }
-            }
-        });
     }
 
 
     private void setPoll() {
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        address = MyPreferences.getAddress(this);
+        userLocation.setText(address);
+
 
         map = MyPreferences.getAllPolls(this);
         Options = map.get(MyPreferences.getPollQues(this));
@@ -223,172 +208,9 @@ public class PollPageActivity extends AppCompatActivity {
         }
     }
 
-
-    private void getLocation() {
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                Log.i("mac", "location: " + location.toString());
-                geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-                storeLocation(location);
-
-            }
-
-            @Override
-            public void onStatusChanged(String s, int i, Bundle bundle) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String s) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String s) {
-
-            }
-        };
-
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Permission Needed")
-                    .setMessage("This permission is required since poll is based on location")
-                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            ActivityCompat.requestPermissions(PollPageActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-
-                        }
-                    })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            progressDialog.dismiss();
-                            dialogInterface.dismiss();
-                        }
-                    })
-                    .create()
-                    .show();
-        } else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                //ask permission
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-            } else {
-                //we have permission
-
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 120, 500, locationListener);
-                Location lastknownlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                storeLocation(lastknownlocation);
-            }
-        }
-    }
-
-    private void storeLocation(Location location) {
-        try {
-            List<Address> listAddress = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-
-            if (listAddress != null && listAddress.size() > 0) {
-                Log.i("mac", "Place Info: " + listAddress.get(0).toString());
-                if (listAddress.get(0).getLocality() != null) {
-                    address = listAddress.get(0).getLocality();
-                    userLocation.setText(address);
-                    if (address != null && !address.isEmpty()) {
-                        MyPreferences.setAddress(this, address);
-                        progressDialog.dismiss();
-                    }
-                }
-            }
-
-
-        } catch (Exception e) {
-            Log.i("mac", "location error: " + e.getMessage());
-        }
-    }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-
-        if (requestCode == LOCATION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 120, 500, locationListener);
-
-                }
-            } else {
-                progressDialog.dismiss();
-            }
-        }
-    }
-
-
-    private void displayLocationSettingsRequest(Context context) {
-        GoogleApiClient googleApiClient = new GoogleApiClient.Builder(context)
-                .addApi(LocationServices.API).build();
-        googleApiClient.connect();
-
-        LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(10000 / 2);
-
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
-        builder.setAlwaysShow(true);
-
-        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build());
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-            @Override
-            public void onResult(LocationSettingsResult result) {
-                final Status status = result.getStatus();
-                switch (status.getStatusCode()) {
-                    case LocationSettingsStatusCodes.SUCCESS:
-                        Log.i(TAG, "All location settings are satisfied.");
-
-                        getLocation();
-
-                        break;
-                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                        Log.i(TAG, "Location settings are not satisfied. Show the user a dialog to upgrade location settings ");
-
-                        try {
-                            // Show the dialog by calling startResolutionForResult(), and check the result
-                            // in onActivityResult().
-                            status.startResolutionForResult(PollPageActivity.this, REQUEST_CHECK_SETTINGS);
-                        } catch (IntentSender.SendIntentException e) {
-                            Log.i(TAG, "PendingIntent unable to execute request.");
-                        }
-                        break;
-                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                        Log.i(TAG, "Location settings are inadequate, and cannot be fixed here. Dialog not created.");
-                        break;
-                }
-            }
-        });
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-// Check for the integer request code originally supplied to startResolutionForResult().
-            case REQUEST_CHECK_SETTINGS:
-                switch (resultCode) {
-                    case Activity.RESULT_OK:
-                        getLocation();
-                        break;
-                    case Activity.RESULT_CANCELED:
-                        displayLocationSettingsRequest(getApplicationContext());//keep asking if imp or do whatever
-                        break;
-                }
-                break;
-        }
-    }
-
     @Override
     public void onBackPressed() {
-        startActivity(new Intent(this,MainActivity.class));
+        startActivity(new Intent(this, MainActivity.class));
         finish();
     }
 }

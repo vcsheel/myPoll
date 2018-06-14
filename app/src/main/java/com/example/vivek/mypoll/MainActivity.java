@@ -1,7 +1,24 @@
 package com.example.vivek.mypoll;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.app.Service;
+import android.bluetooth.BluetoothClass;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,6 +32,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.vivek.mypoll.Utility.MyPreferences;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -22,9 +48,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.security.Provider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -36,9 +64,20 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private TextView noPollsTv;
     private FirebaseAuth firebaseAuth;
-
+    private final String adminemail = "vsheel008@gmail.com";
     private List<String> mPolls;
     private Map<String,List<String>> map;
+
+
+    private LocationManager locationManager;
+    private LocationListener locationListener;
+    private Geocoder geocoder;
+    protected static final int REQUEST_CHECK_SETTINGS = 0x1;
+    private GoogleApiClient googleApiClient;
+    private String TAG = "mac";
+    private static int LOCATION_REQUEST_CODE = 2;
+    private String address=null;
+    private String curremail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,9 +85,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         firebaseAuth = FirebaseAuth.getInstance();
+
         if(firebaseAuth.getCurrentUser()==null){
             startActivity(new Intent(this,LoginActivity.class));
             finish();
+        }else {
+            curremail = firebaseAuth.getCurrentUser().getEmail();
         }
 
         mDatabaseRef = FirebaseDatabase.getInstance().getReference();
@@ -58,50 +100,73 @@ public class MainActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(this);
         noPollsTv = findViewById(R.id.noPollsTv);
 
-        Objects.requireNonNull(getSupportActionBar()).setTitle("Ongoing Polls");
-        progressDialog.setTitle("Getting All Polls");
-        progressDialog.setMessage("Please wait ...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
+        if(MyPreferences.getAddress(this)!=null){
+            getPolls();
+        }else
+            displayLocationSettingsRequest(this);
 
+        Objects.requireNonNull(getSupportActionBar()).setTitle("Ongoing Polls");
+
+    }
+
+    private void getPolls(){
         mPolls = new ArrayList<>();
         map = new HashMap<>();
 
-        mDatabaseRef.child("Polls").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                progressDialog.dismiss();
-                if(!dataSnapshot.exists()){
-                    noPollsTv.setVisibility(View.VISIBLE);
-                }else {
-                    noPollsTv.setVisibility(View.GONE);
-                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                        String s = postSnapshot.getKey().toString();
-                        List<String> val = (List<String>) postSnapshot.getValue();
-                        map.put(s, val);
+        if(!(MyPreferences.getAllPolls(this).isEmpty()) && !(MyPreferences.getAllPolls(this)==null)){
+            map = MyPreferences.getAllPolls(this);
+            mPolls = new ArrayList<String>(map.keySet());
+            mPollAdapter = new PollAdapter(MainActivity.this, mPolls);
+            mPollRecyclerView.setAdapter(mPollAdapter);
+        }else {
 
-                        mPolls.add(s);
+            progressDialog.setTitle("Getting All Polls");
+            progressDialog.setMessage("Please wait ...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+
+
+            mDatabaseRef.child("Polls").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    progressDialog.dismiss();
+                    if (!dataSnapshot.exists()) {
+                        noPollsTv.setVisibility(View.VISIBLE);
+                    } else {
+                        noPollsTv.setVisibility(View.GONE);
+                        for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                            String s = postSnapshot.getKey().toString();
+                            List<String> val = (List<String>) postSnapshot.getValue();
+                            map.put(s, val);
+
+                            mPolls.add(s);
+                        }
+
+                        MyPreferences.setAllPolls(getApplicationContext(), map);
+                        mPollAdapter = new PollAdapter(MainActivity.this, mPolls);
+                        mPollRecyclerView.setAdapter(mPollAdapter);
                     }
-
-                    MyPreferences.setAllPolls(getApplicationContext(), map);
-                    mPollAdapter = new PollAdapter(MainActivity.this, mPolls);
-                    mPollRecyclerView.setAdapter(mPollAdapter);
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                progressDialog.dismiss();
-                Toast.makeText(getApplicationContext(),databaseError.getMessage(),Toast.LENGTH_SHORT).show();
-            }
-        });
-
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    progressDialog.dismiss();
+                    Toast.makeText(getApplicationContext(), databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.extras_menu,menu);
+        MenuItem item = menu.findItem(R.id.newPoll);
+        if(adminemail.equals(curremail)){
+            item.setVisible(true);
+        }else{
+            item.setVisible(false);
+        }
         return true;
     }
 
@@ -114,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.logout:
                 if(firebaseAuth.getCurrentUser()!=null){
                     firebaseAuth.signOut();
+                    MyPreferences.clearSP();
                     startActivity(new Intent(this,LoginActivity.class));
                     Toast.makeText(this,"Logged Out",Toast.LENGTH_SHORT).show();
                     finish();
@@ -131,4 +197,185 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         MyPreferences.setHasPolled(this,false);
     }
+
+
+
+
+
+    private void getLocation() {
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                Log.i("mac", "location: " + location.toString());
+                geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+                storeLocation(location);
+
+            }
+
+            @Override
+            public void onStatusChanged(String s, int i, Bundle bundle) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String s) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String s) {
+
+            }
+        };
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission Needed")
+                    .setMessage("This permission is required since poll is based on location")
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
+
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            progressDialog.dismiss();
+                            dialogInterface.dismiss();
+                            getPolls();
+                        }
+                    })
+                    .create()
+                    .show();
+        } else {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                //ask permission
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
+            } else {
+                //we have permission
+
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 120, 500, locationListener);
+                Location lastknownlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                storeLocation(lastknownlocation);
+            }
+        }
+    }
+
+    private void storeLocation(Location location) {
+        try {
+            List<Address> listAddress = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+
+            if (listAddress != null && listAddress.size() > 0) {
+                Log.i("mac", "Place Info: " + listAddress.get(0).toString());
+                if (listAddress.get(0).getLocality() != null) {
+                    address = listAddress.get(0).getLocality();
+                    if (address != null && !address.isEmpty()) {
+                        MyPreferences.setAddress(this, address);
+                        progressDialog.dismiss();
+                        getPolls();
+                    }
+                }
+            }
+
+
+        } catch (Exception e) {
+            Log.i("mac", "location error: " + e.getMessage());
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+
+        if (requestCode == LOCATION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 120, 500, locationListener);
+
+                }
+            } else {
+                progressDialog.dismiss();
+                getPolls();
+            }
+        }
+    }
+
+
+    public void displayLocationSettingsRequest(Context context) {
+        progressDialog.setTitle("Getting your Location");
+        progressDialog.setMessage("Please wait...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        GoogleApiClient googleApiClient = new GoogleApiClient.Builder(context)
+                .addApi(LocationServices.API).build();
+        googleApiClient.connect();
+
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(10000 / 2);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
+        builder.setAlwaysShow(true);
+
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        Log.i(TAG, "All location settings are satisfied.");
+
+                        getLocation();
+
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        Log.i(TAG, "Location settings are not satisfied. Show the user a dialog to upgrade location settings ");
+
+                        try {
+                            // Show the dialog by calling startResolutionForResult(), and check the result
+                            // in onActivityResult().
+                            status.startResolutionForResult(MainActivity.this, REQUEST_CHECK_SETTINGS);
+                        } catch (IntentSender.SendIntentException e) {
+                            Log.i(TAG, "PendingIntent unable to execute request.");
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        Log.i(TAG, "Location settings are inadequate, and cannot be fixed here. Dialog not created.");
+                        break;
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+// Check for the integer request code originally supplied to startResolutionForResult().
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        getLocation();
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        displayLocationSettingsRequest(getApplicationContext());//keep asking if imp or do whatever
+                        break;
+                }
+                break;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        MyPreferences.clearSP();
+    }
+
+
 }

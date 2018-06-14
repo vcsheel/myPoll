@@ -104,6 +104,7 @@ public class AddPollActivity extends AppCompatActivity {
                                 progressDialog.dismiss();
                                 Toast.makeText(getApplicationContext(),"Poll Added ",Toast.LENGTH_SHORT).show();
                                 startActivity(new Intent(getApplicationContext(),MainActivity.class));
+                                finish();
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {

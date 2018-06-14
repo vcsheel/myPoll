@@ -97,4 +97,8 @@ public class MyPreferences {
         spe.putString("allpolls", json);
         spe.apply();
     }
+
+    public static void clearSP() {
+        sp.edit().clear().apply();
+    }
 }
