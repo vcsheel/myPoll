@@ -1,6 +1,7 @@
 package com.example.vivek.mypoll;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -27,6 +28,7 @@ public class PollPageActivity extends AppCompatActivity {
     private LinearLayout pollLayout;
     private String chosenOption;
     private TextView pollQuestion;
+    private Button submitPoll;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,8 +37,15 @@ public class PollPageActivity extends AppCompatActivity {
 
         pollLayout = findViewById(R.id.pollLinearLayout);
         pollQuestion = findViewById(R.id.pollQuestionTv);
+        submitPoll = findViewById(R.id.submitPoll);
         setPoll();
 
+        submitPoll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(getApplicationContext(),PollResult.class));
+            }
+        });
     }
 
     private void setPoll(){

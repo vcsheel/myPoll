@@ -10,7 +10,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.Toast;
 
 import com.example.vivek.mypoll.Utility.MyPreferences;
@@ -19,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class MainActivity extends AppCompatActivity {
+public class AddPollActivity extends AppCompatActivity {
 
     private LinearLayout parentLayout;
     private Button submitButton;
@@ -30,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_add_poll);
         parentLayout = findViewById(R.id.parent_layout);
         submitButton = findViewById(R.id.submitButton);
         option1 = findViewById(R.id.option_et);
