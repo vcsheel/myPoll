@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.vivek.mypoll.Utility.MyPreferences;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private PollAdapter mPollAdapter;
     private ProgressDialog progressDialog;
     private TextView noPollsTv;
+    private FirebaseAuth firebaseAuth;
 
     private List<String> mPolls;
     private Map<String,List<String>> map;
@@ -42,6 +44,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        firebaseAuth = FirebaseAuth.getInstance();
+        if(firebaseAuth.getCurrentUser()==null){
+            startActivity(new Intent(this,LoginActivity.class));
+            finish();
+        }
 
         mDatabaseRef = FirebaseDatabase.getInstance().getReference();
         mPollRecyclerView = findViewById(R.id.pollRecyclerView);
@@ -104,9 +112,14 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this,AddPollActivity.class));
                 return true;
             case R.id.logout:
-                //todo for logout
-                Toast.makeText(this,"To do",Toast.LENGTH_SHORT).show();
-                return true;
+                if(firebaseAuth.getCurrentUser()!=null){
+                    firebaseAuth.signOut();
+                    startActivity(new Intent(this,LoginActivity.class));
+                    Toast.makeText(this,"Logged Out",Toast.LENGTH_SHORT).show();
+                    finish();
+                    return true;
+                }
+
             default:
                 return super.onOptionsItemSelected(item);
         }
