@@ -1,0 +1,59 @@
+{
+  "project_info": {
+    "project_number": "440333488393",
+    "firebase_url": "https://crowdmeter.firebaseio.com",
+    "project_id": "crowdmeter",
+    "storage_bucket": "crowdmeter.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:440333488393:android:a88c5f1ea29c5d55",
+        "android_client_info": {
+          "package_name": "com.example.vivek.mypoll"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "440333488393-efjt535mmdcmahmh85412osnqtn4if7n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vivek.mypoll",
+            "certificate_hash": "2bb4afc07210e3aea3ccd4c0eb069cdeb6a7b00e"
+          }
+        },
+        {
+          "client_id": "440333488393-gvou9j3k1j3f558rh8jcubc151me87km.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "440333488393-gvou9j3k1j3f558rh8jcubc151me87km.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCx_kmwFDKLQvqM1vHsfwSXtYvqANuhVAE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "440333488393-gvou9j3k1j3f558rh8jcubc151me87km.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

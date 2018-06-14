@@ -40,7 +40,7 @@ public class PollResult extends AppCompatActivity {
     private TextView pollResultQues;
     private Button goHome;
     private DatabaseReference mDatabaseRef;
-    Map<String,Integer> map;
+    private Map<String,Integer> map;
     private ProgressDialog progressDialog;
 
     @Override
@@ -55,10 +55,6 @@ public class PollResult extends AppCompatActivity {
         goHome = findViewById(R.id.goHome);
         map = new HashMap<>();
 
-        progressDialog.setTitle("Submitting your choice");
-        progressDialog.setMessage("Please wait...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
         getDatabaseValues();
 
         goHome.setOnClickListener(new View.OnClickListener() {
@@ -76,7 +72,6 @@ public class PollResult extends AppCompatActivity {
         float currP = 0;
 
         for(int v : map.values()){
-            Log.i("mac","mapv:"+v);
             total += v;
         }
 
@@ -119,9 +114,14 @@ public class PollResult extends AppCompatActivity {
 
 
     private void getDatabaseValues(){
-            mDatabaseRef.child("PollResults").child(MyPreferences.getPollQues(this))
+        progressDialog.setTitle("Getting Results");
+        progressDialog.setMessage("Please wait...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        mDatabaseRef.child("PollResults").child(MyPreferences.getPollQues(this))
                     .child(MyPreferences.getAddress(this))
-                    .addValueEventListener(new ValueEventListener() {
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             progressDialog.dismiss();
@@ -136,6 +136,7 @@ public class PollResult extends AppCompatActivity {
                                 }
                             }
                             setPoll();
+
                         }
 
                         @Override
@@ -143,11 +144,15 @@ public class PollResult extends AppCompatActivity {
                             progressDialog.dismiss();
                             Toast.makeText(getApplicationContext(),databaseError.getMessage(),Toast.LENGTH_SHORT).show();
                         }
+
                     });
     }
 
     @Override
     public void onBackPressed() {
+        startActivity(new Intent(this,MainActivity.class ));
         finish();
     }
+
+
 }

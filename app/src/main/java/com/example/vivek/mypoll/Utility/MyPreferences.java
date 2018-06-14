@@ -46,6 +46,17 @@ public class MyPreferences {
         spe.apply();
     }
 
+    public static boolean getHasPolled(Context cont){
+        createSharedPref(cont);
+        return sp.getBoolean("isPolled", false);
+    }
+    public static void setHasPolled(Context cont, Boolean id){
+        createSharedPref(cont);
+        SharedPreferences.Editor spe = sp.edit();
+        spe.putBoolean("isPolled", id);
+        spe.apply();
+    }
+
     public static List<String> getOptionsList(Context cont){
         createSharedPref(cont);
         Gson gson = new Gson();

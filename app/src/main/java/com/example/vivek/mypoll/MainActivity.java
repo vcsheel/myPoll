@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         mPolls = new ArrayList<>();
         map = new HashMap<>();
 
-        mDatabaseRef.child("Polls").addValueEventListener(new ValueEventListener() {
+        mDatabaseRef.child("Polls").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 progressDialog.dismiss();
@@ -124,5 +124,11 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MyPreferences.setHasPolled(this,false);
     }
 }
