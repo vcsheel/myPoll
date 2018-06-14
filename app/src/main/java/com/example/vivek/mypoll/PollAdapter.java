@@ -118,7 +118,7 @@ public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
                             }
                         }
                         mContext.startActivity(new Intent(mContext,PollPageActivity.class));
-                       // ((Activity)mContext).finish();
+                        //((Activity)mContext).finish();
                     }
 
                     @Override

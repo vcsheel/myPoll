@@ -3,6 +3,7 @@ package com.example.vivek.mypoll;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Path;
 import android.support.v4.content.ContextCompat;

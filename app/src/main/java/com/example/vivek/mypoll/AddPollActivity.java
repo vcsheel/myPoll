@@ -3,6 +3,7 @@ package com.example.vivek.mypoll;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -40,6 +41,7 @@ public class AddPollActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_poll);
+
         parentLayout = findViewById(R.id.parent_layout);
         submitButton = findViewById(R.id.submitButton);
         option1 = findViewById(R.id.option_et);

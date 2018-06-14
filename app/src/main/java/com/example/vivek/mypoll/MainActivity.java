@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -67,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
     private final String adminemail = "vsheel008@gmail.com";
     private List<String> mPolls;
     private Map<String,List<String>> map;
-
 
     private LocationManager locationManager;
     private LocationListener locationListener;
@@ -376,6 +376,5 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         MyPreferences.clearSP();
     }
-
 
 }
