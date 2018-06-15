@@ -3,16 +3,23 @@ package com.example.vivek.mypoll;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.vivek.mypoll.Utility.MyPreferences;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -64,10 +71,36 @@ public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
                     getDatabaseValues();
             }
         });
+
+        holder.delPollButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AlertDialog.Builder builder;
+
+                builder = new AlertDialog.Builder(mContext);
+
+                builder.setTitle("Delete entry")
+                        .setMessage("Are you sure you want to delete this entry?")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                delEntry(position);
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                // do nothing
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+            }
+        });
+
     }
 
     @Override
     public int getItemCount() {
+
         return mPolls.size();
     }
 
@@ -76,11 +109,14 @@ public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
     public class PollHolder extends RecyclerView.ViewHolder{
 
         public TextView pollQuesCardTv;
+        public ImageView delPollButton;
+
 
         public PollHolder(View itemView) {
             super(itemView);
 
             pollQuesCardTv = itemView.findViewById(R.id.pollquesCardTv);
+            delPollButton = itemView.findViewById(R.id.delPollButton);
             mDatabaseRef = FirebaseDatabase.getInstance().getReference();
             firebaseAuth = FirebaseAuth.getInstance();
             progressDialog = new ProgressDialog(mContext);
@@ -91,8 +127,13 @@ public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
                 mContext.startActivity(new Intent(mContext, LoginActivity.class));
             }else{
                 currUser = firebaseAuth.getCurrentUser().getUid();
-                Log.i("mac","currUser:"+currUser);
+                if(firebaseAuth.getCurrentUser().getEmail().equals(MainActivity.adminemail)){
+                    delPollButton.setVisibility(View.VISIBLE);
+                }else {
+                    delPollButton.setVisibility(View.GONE);
+                }
             }
+
 
         }
     }
@@ -125,6 +166,28 @@ public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
                     public void onCancelled(DatabaseError databaseError) {
                         progressDialog.dismiss();
                         Toast.makeText(mContext,databaseError.getMessage(),Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void delEntry(final int pos){
+        final String ques = mPolls.get(pos);
+
+        mDatabaseRef.child("Polls").child(ques).removeValue()
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Toast.makeText(mContext,"Entry deleted from database",Toast.LENGTH_SHORT).show();
+                        mPolls.remove(pos);
+                        notifyDataSetChanged();
+                        mDatabaseRef.child("PollResults").child(ques).removeValue();
+
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(mContext,"Error while deleting",Toast.LENGTH_SHORT).show();
                     }
                 });
     }

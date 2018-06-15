@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <item android:icon="@drawable/ic_refresh_black_24dp"
+        android:title="Reload Poll"
+        android:id="@+id/refreshButton"
+        app:showAsAction="always"/>
+
     <item android:id="@+id/newPoll"
         app:showAsAction="never"
         android:icon="@drawable/ic_add_black_24dp"

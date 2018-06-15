@@ -64,9 +64,10 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mPollRecyclerView;
     private PollAdapter mPollAdapter;
     private ProgressDialog progressDialog;
-    private TextView noPollsTv;
+    private ProgressDialog progressDialog1;
+    public static TextView noPollsTv;
     private FirebaseAuth firebaseAuth;
-    private final String adminemail = "vsheel008@gmail.com";
+    public final static String adminemail = "vsheel008@gmail.com";
     private List<String> mPolls;
     private Map<String,List<String>> map;
 
@@ -80,6 +81,9 @@ public class MainActivity extends AppCompatActivity {
     private String address=null;
     private String curremail;
     private boolean backpresscount =false;
+    private TextView userLocationTv;
+    private TextView updateLocationTv;
+    private boolean refresh=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,38 +104,57 @@ public class MainActivity extends AppCompatActivity {
         mPollRecyclerView.setHasFixedSize(true);
         mPollRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         progressDialog = new ProgressDialog(this);
+        progressDialog1 = new ProgressDialog(this);
         noPollsTv = findViewById(R.id.noPollsTv);
+        userLocationTv = findViewById(R.id.userMainLocationTv);
+        updateLocationTv = findViewById(R.id.updateLocText);
 
-        if(MyPreferences.getAddress(this)!=null){
+
+        if(MyPreferences.getAddress(this)==null){
+            //displayLocationSettingsRequest(this);
             getPolls();
-        }else
-            displayLocationSettingsRequest(this);
+
+        }else {
+            userLocationTv.setText(MyPreferences.getAddress(this));
+            getPolls();
+
+        }
+
 
         Objects.requireNonNull(getSupportActionBar()).setTitle("Ongoing Polls");
+
+        updateLocationTv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                displayLocationSettingsRequest(getApplicationContext());
+            }
+        });
 
     }
 
     private void getPolls(){
         mPolls = new ArrayList<>();
         map = new HashMap<>();
+        boolean isNew = MyPreferences.getisNewPoll(this);
 
-        if(!(MyPreferences.getAllPolls(this).isEmpty()) && !(MyPreferences.getAllPolls(this)==null)){
+        if(!(MyPreferences.getAllPolls(this).isEmpty()) && !(MyPreferences.getAllPolls(this)==null) && !refresh && !isNew){
             map = MyPreferences.getAllPolls(this);
             mPolls = new ArrayList<String>(map.keySet());
             mPollAdapter = new PollAdapter(MainActivity.this, mPolls);
             mPollRecyclerView.setAdapter(mPollAdapter);
         }else {
 
-            progressDialog.setTitle("Getting All Polls");
-            progressDialog.setMessage("Please wait ...");
-            progressDialog.setCancelable(false);
-            progressDialog.show();
+            progressDialog1.setTitle("Getting All Polls");
+            progressDialog1.setMessage("Please wait ...");
+            progressDialog1.setCancelable(false);
+            progressDialog1.show();
 
 
             mDatabaseRef.child("Polls").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    progressDialog.dismiss();
+                    progressDialog1.dismiss();
+
                     if (!dataSnapshot.exists()) {
                         noPollsTv.setVisibility(View.VISIBLE);
                     } else {
@@ -147,12 +170,14 @@ public class MainActivity extends AppCompatActivity {
                         MyPreferences.setAllPolls(getApplicationContext(), map);
                         mPollAdapter = new PollAdapter(MainActivity.this, mPolls);
                         mPollRecyclerView.setAdapter(mPollAdapter);
+                        refresh=false;
+                        MyPreferences.setisNewPoll(getApplicationContext(),false);
                     }
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    progressDialog.dismiss();
+                    progressDialog1.dismiss();
                     Toast.makeText(getApplicationContext(), databaseError.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
@@ -163,7 +188,9 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.extras_menu,menu);
+
         MenuItem item = menu.findItem(R.id.newPoll);
+
         if(adminemail.equals(curremail)){
             item.setVisible(true);
         }else{
@@ -189,6 +216,11 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
 
+            case R.id.refreshButton:
+                refresh=true;
+                getPolls();
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -202,9 +234,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-
-
     private void getLocation() {
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
@@ -213,7 +242,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.i("mac", "location: " + location.toString());
                 geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
                 storeLocation(location);
-
             }
 
             @Override
@@ -248,7 +276,6 @@ public class MainActivity extends AppCompatActivity {
                         public void onClick(DialogInterface dialogInterface, int i) {
                             progressDialog.dismiss();
                             dialogInterface.dismiss();
-                            getPolls();
                         }
                     })
                     .create()
@@ -259,13 +286,13 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
             } else {
                 //we have permission
-
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 120, 500, locationListener);
-                Location lastknownlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                storeLocation(lastknownlocation);
+                //Location lastknownlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                //storeLocation(lastknownlocation);
             }
         }
     }
+
 
     private void storeLocation(Location location) {
         try {
@@ -273,13 +300,14 @@ public class MainActivity extends AppCompatActivity {
 
             if (listAddress != null && listAddress.size() > 0) {
                 Log.i("mac", "Place Info: " + listAddress.get(0).toString());
+
                 if (listAddress.get(0).getLocality() != null) {
                     address = listAddress.get(0).getLocality();
                     if (address != null && !address.isEmpty()) {
                         MyPreferences.setAddress(this, address);
                         progressDialog.dismiss();
+                        userLocationTv.setText(address);
                         locationManager.removeUpdates(locationListener);
-                        getPolls();
                     }
                 }
             }
@@ -303,7 +331,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             } else {
                 progressDialog.dismiss();
-                getPolls();
             }
         }
     }
@@ -375,11 +402,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        MyPreferences.clearSP();
-    }
 
     @Override
     public void onBackPressed() {
