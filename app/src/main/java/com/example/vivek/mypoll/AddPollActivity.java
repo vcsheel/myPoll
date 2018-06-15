@@ -148,4 +148,9 @@ public class AddPollActivity extends AppCompatActivity {
         parentLayout.removeView((View)v.getParent());
     }
 
+    @Override
+    public void onBackPressed() {
+        startActivity(new Intent(this,MainActivity.class));
+        finish();
+    }
 }

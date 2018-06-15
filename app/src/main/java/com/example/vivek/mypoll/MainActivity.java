@@ -177,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()){
             case R.id.newPoll:
                 startActivity(new Intent(this,AddPollActivity.class));
+                this.finish();
                 return true;
             case R.id.logout:
                 if(firebaseAuth.getCurrentUser()!=null){
@@ -277,6 +278,7 @@ public class MainActivity extends AppCompatActivity {
                     if (address != null && !address.isEmpty()) {
                         MyPreferences.setAddress(this, address);
                         progressDialog.dismiss();
+                        locationManager.removeUpdates(locationListener);
                         getPolls();
                     }
                 }
