@@ -16,6 +16,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -78,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     private static int LOCATION_REQUEST_CODE = 2;
     private String address=null;
     private String curremail;
+    private boolean backpresscount =false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -377,4 +379,20 @@ public class MainActivity extends AppCompatActivity {
         MyPreferences.clearSP();
     }
 
+    @Override
+    public void onBackPressed() {
+        if(!backpresscount){
+            backpresscount = true;
+            Toast.makeText(this,"Press back again to exit!",Toast.LENGTH_SHORT).show();
+            new Handler().postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    backpresscount=false;
+                }
+            }, 2000);
+        }else {
+            super.onBackPressed();
+        }
+    }
 }
