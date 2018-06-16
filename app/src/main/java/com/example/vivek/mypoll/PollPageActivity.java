@@ -54,6 +54,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -107,7 +109,7 @@ public class PollPageActivity extends AppCompatActivity {
         }
 
         if (MyPreferences.getHasPolled(this)) {
-            Toast.makeText(this,"You have already polled for this poll",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,"You have already voted for this poll today",Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, PollResult.class));
             finish();
         }
@@ -118,6 +120,9 @@ public class PollPageActivity extends AppCompatActivity {
         submitPoll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+                String date = df.format(Calendar.getInstance().getTime());
+
                 if (address != null && !address.isEmpty()) {
                     if (chosenOption != null && !chosenOption.isEmpty()) {
 
@@ -126,8 +131,10 @@ public class PollPageActivity extends AppCompatActivity {
                         progressDialog.setCancelable(false);
                         progressDialog.show();
 
-                        mDatabase.child("PollResults").child(MyPreferences.getPollQues(getApplicationContext()))
-                                .child(address).child(currUser).setValue(chosenOption)
+                        mDatabase.child("PollResults").child(date)
+                                .child(MyPreferences.getPollQues(getApplicationContext()))
+                                .child(address)
+                                .child(currUser).setValue(chosenOption)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {

@@ -30,6 +30,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +43,7 @@ public class PollResult extends AppCompatActivity {
     private TextView pollResultQues;
     private Button goHome;
     private DatabaseReference mDatabaseRef;
-    private Map<String,Integer> map;
+    private Map<String, Integer> map;
     private ProgressDialog progressDialog;
 
     @Override
@@ -72,10 +74,10 @@ public class PollResult extends AppCompatActivity {
 
 
     private void setPoll() {
-        int total=0;
+        int total = 0;
         float currP = 0;
 
-        for(int v : map.values()){
+        for (int v : map.values()) {
             total += v;
         }
 
@@ -89,10 +91,10 @@ public class PollResult extends AppCompatActivity {
             final CustomProgress customProgress = rowView.findViewById(R.id.customProgress);
 
 
-            if(map.containsKey(Options.get(i))){
+            if (map.containsKey(Options.get(i))) {
                 int oval = map.get(Options.get(i));
-                currP = (float) oval/(float) total;
-            }else {
+                currP = (float) oval / (float) total;
+            } else {
                 currP = 0;
             }
 
@@ -102,7 +104,7 @@ public class PollResult extends AppCompatActivity {
             customProgress.setShowingPercentage(false);
 
             String LeftText = Options.get(i);
-            String RightText = String.valueOf((int) Math.round(currP*100))+"%";
+            String RightText = String.valueOf((int) Math.round(currP * 100)) + "%";
 
             final String resultText = LeftText + "       " + RightText;
             customProgress.setText(resultText);
@@ -117,39 +119,43 @@ public class PollResult extends AppCompatActivity {
     }
 
 
-    private void getDatabaseValues(){
+    private void getDatabaseValues() {
+        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+        String date = df.format(Calendar.getInstance().getTime());
+
         progressDialog.setTitle("Getting Results");
         progressDialog.setMessage("Please wait...");
         progressDialog.setCancelable(false);
         progressDialog.show();
 
-        mDatabaseRef.child("PollResults").child(MyPreferences.getPollQues(this))
-                    .child(MyPreferences.getAddress(this))
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            progressDialog.dismiss();
-                            for(DataSnapshot mysnap: dataSnapshot.getChildren()){
-                                String key = mysnap.getKey();
-                                String val = mysnap.getValue().toString();
+        mDatabaseRef.child("PollResults").child(date)
+                .child(MyPreferences.getPollQues(this))
+                .child(MyPreferences.getAddress(this))
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        progressDialog.dismiss();
+                        for (DataSnapshot mysnap : dataSnapshot.getChildren()) {
+                            String key = mysnap.getKey();
+                            String val = mysnap.getValue().toString();
 
-                                if(map.containsKey(val)){
-                                    map.put(val,map.get(val)+1);
-                                }else {
-                                    map.put(val,1);
-                                }
+                            if (map.containsKey(val)) {
+                                map.put(val, map.get(val) + 1);
+                            } else {
+                                map.put(val, 1);
                             }
-                            setPoll();
-
                         }
+                        setPoll();
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            progressDialog.dismiss();
-                            Toast.makeText(getApplicationContext(),databaseError.getMessage(),Toast.LENGTH_SHORT).show();
-                        }
+                    }
 
-                    });
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        progressDialog.dismiss();
+                        Toast.makeText(getApplicationContext(), databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+
+                });
     }
 
     @Override
@@ -157,7 +163,8 @@ public class PollResult extends AppCompatActivity {
         Intent i = new Intent(this, MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(i);        finish();
+        startActivity(i);
+        finish();
     }
 
 

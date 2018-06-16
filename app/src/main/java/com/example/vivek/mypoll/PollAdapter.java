@@ -27,8 +27,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
@@ -140,12 +144,17 @@ public class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollHolder>{
 
 
     private void getDatabaseValues(){
+        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+        String date = df.format(Calendar.getInstance().getTime());
+        Log.i("mac","date:"+date);
+
         progressDialog.setTitle("Loading");
         progressDialog.setMessage("Please wait...");
         progressDialog.setCancelable(false);
         progressDialog.show();
 
-        mDatabaseRef.child("PollResults").child(MyPreferences.getPollQues(mContext))
+        mDatabaseRef.child("PollResults").child(date)
+                .child(MyPreferences.getPollQues(mContext))
                 .child(MyPreferences.getAddress(mContext))
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
