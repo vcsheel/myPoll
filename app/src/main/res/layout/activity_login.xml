@@ -28,29 +28,46 @@
             android:src="@drawable/ic_launcher_foreground" />
 
 
-        <android.support.design.widget.TextInputEditText
-            android:id="@+id/etusername"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
+        <android.support.design.widget.TextInputLayout
             android:layout_weight="1"
-            android:drawablePadding="12dp"
-            android:drawableStart="@drawable/ic_email_black_24dp"
-            android:hint="Email"
-            android:inputType="textEmailAddress"
-            android:textColor="#ffffff"
-            android:textColorHint="#ffffff" />
+            android:layout_width="match_parent"
+            android:theme="@style/TextLabel"
+            android:layout_height="0dp">
 
-        <android.support.design.widget.TextInputEditText
-            android:id="@+id/etpassword"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
+            <android.support.design.widget.TextInputEditText
+                android:id="@+id/etusername"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:drawablePadding="12dp"
+                android:drawableStart="@drawable/ic_email_black_24dp"
+                android:hint="Email"
+                android:inputType="textEmailAddress"
+                android:textColor="#ffffff"
+                android:textColorHint="#ffffff" />
+
+        </android.support.design.widget.TextInputLayout>
+
+
+        <android.support.design.widget.TextInputLayout
             android:layout_weight="1"
-            android:drawablePadding="12dp"
-            android:drawableStart="@drawable/ic_lock_outline_black_24dp"
-            android:hint="Password"
-            android:inputType="textPassword"
-            android:textColor="#ffffff"
-            android:textColorHint="#ffffff" />
+            android:layout_width="match_parent"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="#ffffff"
+            android:theme="@style/TextLabel"
+            android:layout_height="0dp">
+
+            <android.support.design.widget.TextInputEditText
+                android:id="@+id/etpassword"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:drawablePadding="12dp"
+                android:drawableStart="@drawable/ic_lock_outline_black_24dp"
+                android:hint="Password"
+                android:inputType="textPassword"
+                android:textColor="#ffffff" />
+
+        </android.support.design.widget.TextInputLayout>
+
 
 
         <TextView
@@ -88,7 +105,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_weight="1.5" />
+            android:layout_weight="0.8" />
 
         <TextView
             android:id="@+id/loginHelpText"
@@ -104,13 +121,35 @@
             android:id="@+id/tvRegister"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:gravity="center"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_weight="0.8"
+            android:gravity="top"
             android:text="Register Here"
             android:textColor="#ffffff"
             android:textSize="15sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:layout_weight="0.3"
+            android:layout_gravity="center"
+            android:textColor="#ffffff"
+            android:text="Or,"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp" />
+
+        <com.google.android.gms.common.SignInButton
+            android:layout_weight="0.8"
+            android:layout_gravity="center"
+            android:id="@+id/GoogleButton"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp">
+
+        </com.google.android.gms.common.SignInButton>
+
+        <android.support.v4.widget.Space
+            android:layout_weight="0.5"
+            android:layout_width="match_parent"
+            android:layout_height="0dp" />
 
     </LinearLayout>
 

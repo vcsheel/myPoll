@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog progressDialog1;
     public static TextView noPollsTv;
     private FirebaseAuth firebaseAuth;
-    public final static String adminemail = "vsheel008@gmail.com";
+    public final static String adminemail = "social.crowdmeter@gmail.com";
     private List<String> mPolls;
     private Map<String,List<String>> map;
 
